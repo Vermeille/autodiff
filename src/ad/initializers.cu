@@ -26,14 +26,14 @@ static curandGenerator_t* GetUniformGenerator() {
 
 void Gaussian::Init(Matrix& mat) const {
     curandGenerator_t* gen = GetUniformGenerator();
-    curandGenerateNormal(*gen, mat.data(), mat.size(), mu_, sigma_);
+    curandGenerateNormal(*gen, mat.data().Get(), mat.size(), mu_, sigma_);
     std::cout << "gaussian inited " << i << "\n";
     ++i;
 }
 
 void Uniform::Init(Matrix& mat) const {
     curandGenerator_t* gen = GetUniformGenerator();
-    curandGenerateUniform(*gen, mat.data(), mat.size());
+    curandGenerateUniform(*gen, mat.data().Get(), mat.size());
     auto x = cuda::Array(mat.data());
     auto scale = cuda::Value(std::fabs(from_) + std::fabs(to_));
     auto from = cuda::Value(from_);

@@ -2,6 +2,8 @@
 
 #include <cstdio>
 
+#include "../cuda/helpers.h"
+
 #ifdef __CUDACC__
 # define CUDA_CALLABLE __host__ __device__
 #else
@@ -73,14 +75,14 @@ class KArray {
     T* arr_;
 
     public:
-        KArray(T* a) : arr_(a) {}
+        KArray(::cuda::Ptr<T> a) : arr_(a.Get()) {}
 
         CUDA_CALLABLE
         inline T& operator()(size_t i) { return arr_[i]; }
 };
 
 template <class T>
-K<KArray<T>> Array(T* xs) { return K<KArray<T>>(xs); }
+K<KArray<T>> Array(::cuda::Ptr<T> xs) { return K<KArray<T>>(xs); }
 
 class KValue {
     float val_;
@@ -175,8 +177,8 @@ void RunKernel(const Op& op, size_t sz) {
 
 void SetIdentity(float* array, size_t rows, size_t cols);
 
-void Relu(float* res, const float* arr1, size_t sz);
-void ReluGrad(float* res, const float* arr1, size_t sz);
+void Relu(::cuda::Ptr<float> res, const ::cuda::Ptr<float> arr1, size_t sz);
+void ReluGrad(::cuda::Ptr<float> res, const ::cuda::Ptr<float> arr1, size_t sz);
 
 void Tanh(float* res, const float* arr1, size_t sz);
 void TanhGrad(float* res, const float* arr1, size_t sz);

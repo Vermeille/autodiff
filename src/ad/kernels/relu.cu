@@ -11,8 +11,8 @@ void cuRelu(float* res, const float* arr1, size_t sz) {
     }
 }
 
-void Relu(float* res, const float* arr1, size_t sz) {
-    cuRelu<<<(sz + 128 - 1) / 128, 128>>>(res, arr1, sz);
+void Relu(::cuda::Ptr<float> res, const ::cuda::Ptr<float> arr1, size_t sz) {
+    cuRelu<<<(sz + 128 - 1) / 128, 128>>>(res.Get(), arr1.Get(), sz);
     cudaDeviceSynchronize();
 }
 
@@ -24,8 +24,8 @@ void cuReluGrad(float* res, const float* arr1, size_t sz) {
     }
 }
 
-void ReluGrad(float* res, const float* arr1, size_t sz) {
-    cuReluGrad<<<(sz + 128 - 1) / 128, 128>>>(res, arr1, sz);
+void ReluGrad(::cuda::Ptr<float> res, const ::cuda::Ptr<float> arr1, size_t sz) {
+    cuReluGrad<<<(sz + 128 - 1) / 128, 128>>>(res.Get(), arr1.Get(), sz);
     cudaDeviceSynchronize();
 }
 

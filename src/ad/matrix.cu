@@ -7,7 +7,7 @@ thread_local GPUChunksPool g_gpu_pool;
 
 void Matrix::Clip(double clip) {
     float norm;
-    cublasSnrm2(::cuda::g_cuhandle.get(), size(), data(), 1, &norm);
+    cublasSnrm2(::cuda::g_cuhandle.get(), size(), data().Get(), 1, &norm);
     if (norm > clip) {
         auto x = cuda::Array(data());
         cuda::RunKernel(cuda::Seq(

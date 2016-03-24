@@ -72,13 +72,18 @@ std::ostream& operator<<(std::ostream& strm, const RWMatrix& m) {
 
 // 15% speedup
 class GPUChunksPool {
-    std::unordered_map<int, std::vector<float*>> frees_;
-    std::unordered_map<float*, size_t> allocated_;
+    public:
+        template <class T>
+        using cuptr = ::cuda::Ptr<T>;
+
+    private:
+        std::unordered_map<int, std::vector<cuptr<float>>> frees_;
+        std::unordered_map<cuptr<float>, size_t> allocated_;
 
     public:
-        float* Alloc(size_t sz) {
+        ::cuda::Ptr<float> Alloc(size_t sz) {
             auto& frees = frees_[sz];
-            float* res;
+            cuptr<float> res;
             if (frees.empty()) {
                 res = ::cuda::helpers::cunew<float>(sz);
             } else {
@@ -89,7 +94,7 @@ class GPUChunksPool {
             return res;
         }
 
-        void Free(float* ptr) {
+        void Free(cuptr<float> ptr) {
             auto sz_iter = allocated_.find(ptr);
             if (sz_iter == allocated_.end()) {
                 throw std::runtime_error("try to free a ptr not allocated");
@@ -103,15 +108,19 @@ class GPUChunksPool {
 extern thread_local GPUChunksPool g_gpu_pool;
 
 struct GPUPoolDeleter {
-    void operator()(float* ptr) {
+    typedef ::cuda::Ptr<float> pointer;
+    void operator()(::cuda::Ptr<float> ptr) {
         g_gpu_pool.Free(ptr);
     }
 };
 
 class Matrix {
+    template <class T>
+    using cuptr = ::cuda::Ptr<T>;
+
     size_t rows_;
     size_t cols_;
-    std::unique_ptr<float[], GPUPoolDeleter> data_;
+    std::unique_ptr<cuptr<float>[], GPUPoolDeleter> data_;
 
     public:
         Matrix(size_t r, size_t c)
@@ -130,8 +139,8 @@ class Matrix {
         size_t size() const { return rows_ * cols_; }
         size_t rows() const { return rows_; }
         size_t cols() const { return cols_; }
-        float* data() { return data_.get(); }
-        const float* data() const { return data_.get(); }
+        cuptr<float> data() { return data_.get(); }
+        const cuptr<float> data() const { return data_.get(); }
 
         Matrix(Matrix&& m)
             : rows_(m.rows_),
@@ -162,35 +171,39 @@ class Matrix {
         }
 
         void SetZero() {
-            cudaMemset(data_.get(), 0, size() * sizeof (float));
+            cudaMemset(data_.get().Get(), 0, size() * sizeof (float));
         }
 
         void SetIdentity() {
-            cuda::SetIdentity(data_.get(), rows_, cols_);
+            cuda::SetIdentity(data_.get().Get(), rows_, cols_);
         }
 
         float CudaRead(size_t i, size_t j) const {
             float res;
-            ::cuda::helpers::GPUToCPU(&res, &data_[i + j * rows_], 1);
+            ::cuda::helpers::GPUToCPU(&res, data_.get().At(i + j * rows_), 1);
             return res;
         }
 
         void CudaWrite(size_t i, size_t j, float v) {
-            ::cuda::helpers::CPUToGPU(&data_[i + j * rows_], &v, 1);
+            ::cuda::helpers::CPUToGPU(data_.get().At(i + j * rows_), &v, 1);
         }
 
         float sum() const {
             float res;
-            cublasSasum(::cuda::g_cuhandle.get(), size(), data_.get(), 1, &res);
+            cublasSasum(
+                    ::cuda::g_cuhandle.get(),
+                    size(), data_.get().Get(), 1, &res);
             return res;
         }
 
         Matrix block(size_t a, size_t b, size_t m, size_t n) {
             Matrix res(m, n);
-            float* dst = res.data();
+            cuptr<float> dst = res.data();
             for (size_t i = 0; i < n; ++i) {
-                ::cuda::helpers::GPUToGPU(dst, &data_[(b + i) * rows_ + a], m);
-                dst += m;
+                ::cuda::helpers::GPUToGPU(
+                        dst,
+                        data_.get().At((b + i) * rows_ + a), m);
+                dst = cuptr<float>(dst.Get() + m);
             }
             return res;
         }
@@ -228,10 +241,10 @@ Matrix operator*(const Matrix& a, const Matrix& b) {
             CUBLAS_OP_N, CUBLAS_OP_N,
             m, n, k,
             &one,
-            a.data(), a.rows(),
-            b.data(), b.rows(),
+            a.data().Get(), a.rows(),
+            b.data().Get(), b.rows(),
             &zero,
-            res.data(), m);
+            res.data().Get(), m);
     return res;
 }
 
@@ -261,9 +274,9 @@ Matrix MulNT(const Matrix& a, const Matrix& b) {
             CUBLAS_OP_N, CUBLAS_OP_T,
             m, n, k,
             &one,
-            a.data(), a.rows(),
-            b.data(), b.rows(),
-            &zero, res.data(), m);
+            a.data().Get(), a.rows(),
+            b.data().Get(), b.rows(),
+            &zero, res.data().Get(), m);
     return res;
 }
 
@@ -281,10 +294,10 @@ Matrix MulTN(const Matrix& a, const Matrix& b) {
             CUBLAS_OP_T, CUBLAS_OP_N,
             m, n, k,
             &one,
-            a.data(), a.rows(),
-            b.data(), b.rows(),
+            a.data().Get(), a.rows(),
+            b.data().Get(), b.rows(),
             &zero,
-            res.data(), m);
+            res.data().Get(), m);
     return res;
 }
 
@@ -301,8 +314,8 @@ Matrix MulTT(const Matrix& a, const Matrix& b) {
             ::cuda::g_cuhandle.get(),
             CUBLAS_OP_T, CUBLAS_OP_T,
             m, n, k,
-            &one, a.data(), m, b.data(), k,
-            &zero, res.data(), m);
+            &one, a.data().Get(), m, b.data().Get(), k,
+            &zero, res.data().Get(), m);
     return res;
 }
 

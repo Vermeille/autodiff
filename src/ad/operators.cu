@@ -3,6 +3,8 @@
 #include "kernels/kernels.h"
 #include "operators.h"
 
+using cuptr = ::cuda::Ptr<float>;
+
 namespace ad {
 
 struct cuAddBackprop {
@@ -21,9 +23,9 @@ struct cuAddBackprop {
 
 static void AddBackprop(Var& val, Var* lhs, Var* rhs) {
     cuAddBackprop bp {
-        lhs->derivative().data(),
-        rhs->derivative().data(),
-        val.derivative().data()
+        lhs->derivative().data().Get(),
+        rhs->derivative().data().Get(),
+        val.derivative().data().Get()
     };
     cuda::RunKernel(bp, val.value().size());
 }
@@ -203,9 +205,9 @@ struct cuSoftmaxBackprop {
 
 static void SoftmaxBackprop(Var& val, Var* lhs, Var*) {
     cuSoftmaxBackprop bp {
-        lhs->derivative().data(),
-        val.derivative().data(),
-        val.value().data(),
+        lhs->derivative().data().Get(),
+        val.derivative().data().Get(),
+        val.value().data().Get(),
         val.value().size()
     };
     cuda::RunKernel(bp, val.value().size());
@@ -282,9 +284,9 @@ struct TanhGrad {
 
 static void TanhBackprop(Var& val, Var* lhs, Var*) {
     TanhGrad tg = {
-        .dlhs_ = lhs->derivative().data(),
-        .val_ = val.value().data(),
-        .dprev_ = val.derivative().data()
+        .dlhs_ = lhs->derivative().data().Get(),
+        .val_ = val.value().data().Get(),
+        .dprev_ = val.derivative().data().Get()
     };
 
     cuda::RunKernel(tg, val.value().size());
@@ -311,13 +313,13 @@ Var ColAppend(Var x, Var y) {
 
     Matrix cated(x.value().rows() + y.value().rows(), 1);
     cudaMemcpy(
-            cated.data(),
-            x.value().data(),
+            cated.data().Get(),
+            x.value().data().Get(),
             sizeof (float) * x.value().rows(),
             cudaMemcpyDeviceToDevice);
     cudaMemcpy(
-            cated.data() + x.value().rows(),
-            y.value().data(),
+            cated.data().Get() + x.value().rows(),
+            y.value().data().Get(),
             sizeof (float) * y.value().rows(),
             cudaMemcpyDeviceToDevice);
     return x.graph()->CreateNode(std::move(cated), x, y, ColAppendBackprop);
@@ -331,9 +333,9 @@ static void ColSplitBackprop(Var& val, Var* lhs, Var* params) {
             ::cuda::g_cuhandle.get(),
             len,
             &one,
-            lhs->derivative().data() + from,
+            lhs->derivative().data().Get() + from,
             1,
-            val.derivative().data(),
+            val.derivative().data().Get(),
             1);
 }
 

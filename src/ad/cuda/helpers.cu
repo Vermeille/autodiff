@@ -14,8 +14,8 @@ __global__ void cuFill(float* array, size_t size, float val) {
     }
 }
 
-void fill(float* array, size_t size, float val) {
-    cuFill<<<(size + 512 - 1) / 512, 512>>>(array, size, val);
+void fill(Ptr<float> array, size_t size, float val) {
+    cuFill<<<(size + 512 - 1) / 512, 512>>>(array.Get(), size, val);
 }
 
 } // helpers

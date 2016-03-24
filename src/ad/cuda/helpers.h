@@ -31,6 +31,21 @@ thread_local extern CublasHandle g_cuhandle;
 } // cuda
 
 namespace cuda {
+
+// Strong typing for ptr allocated on the device
+template <class T>
+struct Ptr {
+    T* ptr_;
+    Ptr() : ptr_(nullptr) {}
+    explicit Ptr(T* ptr) : ptr_(ptr) {}
+    T* Get() const { return ptr_; }
+    Ptr& operator=(const Ptr&) = default;
+    Ptr At(size_t i) const { return Ptr(ptr_ + i); }
+    bool operator==(Ptr a) const { return ptr_ == a.ptr_; }
+    bool operator!=(Ptr a) const { return ptr_ != a.ptr_; }
+    bool operator!=(std::nullptr_t) const { return ptr_; }
+};
+
 namespace helpers {
 
 struct CUFree {
@@ -42,37 +57,48 @@ template <class T>
 using cunique_ptr = std::unique_ptr<T, CUFree>;
 
 template <class T>
-T* cunew(size_t n) {
+Ptr<T> cunew(size_t n) {
     T* ptr;
     CUDA_CALL(cudaMalloc((void**)&ptr, sizeof (T) * n));
-    return ptr;
+    return Ptr<T>(ptr);
 }
 
 template <class T>
-void CPUToGPU(T* dst, const T* src, size_t n) {
+void CPUToGPU(Ptr<T> dst, const T* src, size_t n) {
     CUDA_CALL(cudaMemcpy(
-            dst, src,
+            dst.Get(), src,
             sizeof(T) * n,
             cudaMemcpyHostToDevice));
 }
 
 template <class T>
-void GPUToGPU(T* dst, const T* src, size_t n) {
+void GPUToGPU(Ptr<T> dst, const Ptr<T> src, size_t n) {
     CUDA_CALL(cudaMemcpy(
-            dst, src,
+            dst.Get(), src.Get(),
             sizeof(T) * n,
             cudaMemcpyDeviceToDevice));
 }
 
 template <class T>
-void GPUToCPU(T* dst, const T* src, size_t n) {
+void GPUToCPU(T* dst, const Ptr<T> src, size_t n) {
     CUDA_CALL(cudaMemcpy(
-            dst, src,
+            dst, src.Get(),
             sizeof(T) * n,
             cudaMemcpyDeviceToHost));
 }
 
-void fill(float* array, size_t size, float val);
+void fill(Ptr<float> array, size_t size, float val);
 
 } // helpers
 } // cuda
+
+namespace std {
+
+template <class T>
+struct hash<cuda::Ptr<T>> {
+    size_t operator()(const cuda::Ptr<T>& s) const {
+        return std::hash<T*>()(s.Get());
+    }
+};
+
+} // std

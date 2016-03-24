@@ -57,10 +57,10 @@ void Adadelta::Update(Var& v) {
     Matrix& param = v.value();
 
     AdadeltaKernel kern {
-        param.data(),
-        GetR(v).data(),
-        GetS(v).data(),
-        v.derivative().data(),
+        param.data().Get(),
+        GetR(v).data().Get(),
+        GetS(v).data().Get(),
+        v.derivative().data().Get(),
         learning_rate_,
         rho_,
         epsilon_

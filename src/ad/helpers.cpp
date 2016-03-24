@@ -26,7 +26,7 @@ int OneHotVectorDecode(const Matrix& mat) {
 
     int idx;
     cublasIsamax(
-            ::cuda::g_cuhandle.get(), mat.size(), mat.data(), 1, &idx);
+            ::cuda::g_cuhandle.get(), mat.size(), mat.data().Get(), 1, &idx);
     return idx - 1;
 }
 
