@@ -2,8 +2,6 @@
 
 #include <memory>
 
-#include <Eigen/Dense>
-
 #include "../graph.h"
 
 namespace ad {

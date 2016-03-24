@@ -3,8 +3,6 @@
 #include <memory>
 #include <vector>
 
-#include <Eigen/Dense>
-
 #include "../graph.h"
 
 namespace ad {

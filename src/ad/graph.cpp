@@ -4,7 +4,7 @@
 namespace ad {
 
 const Var no_operand(
-        new VarImpl(nullptr, Eigen::MatrixXd(1,1), -1, -1, -1, DoNothingBackprop, false));
+        new VarImpl(nullptr, Matrix(1,1), -1, -1, -1, DoNothingBackprop, false));
 void DoNothingBackprop(Var&, Var*, Var*) {}
 
 size_t Param::next_id_;
@@ -23,36 +23,21 @@ Var ComputationGraph::CreateParam(
     return Var(values_.back().get());
 }
 
-Var ComputationGraph::CreateParam(const Eigen::MatrixXd& val) {
-    return CreateParam(std::make_shared<Param>(val));
+Var ComputationGraph::CreateParam(Matrix&& val) {
+    return CreateParam(std::make_shared<Param>(std::move(val)));
 }
 
 Var ComputationGraph::CreateNode(
-        const Eigen::MatrixXd& val,
+        Matrix&& val,
         const Var& lhs,
         const Var& rhs,
         backward_t bwd) {
     int p_id = values_.size();
 
     values_.emplace_back(
-            new VarImpl(this, val, p_id, lhs.id(), rhs.id(), *bwd, false));
+            new VarImpl(
+                this, std::move(val), p_id, lhs.id(), rhs.id(), *bwd, false));
     return Var(values_.back().get());
-}
-
-static void Clip(Eigen::MatrixXd& mat, double clip) {
-    double* data = mat.data();
-    double norm = 0;
-    for (int i = 0; i < mat.size(); ++i) {
-        norm += data[i] * data[i];
-    }
-    norm = sqrt(norm);
-    if (norm < clip) {
-        return;
-    }
-
-    for (int i = 0; i < mat.size(); ++i) {
-        data[i] = clip * data[i] / norm;
-    }
 }
 
 void ComputationGraph::BackpropFrom(Var& x, double clip) {
@@ -61,7 +46,7 @@ void ComputationGraph::BackpropFrom(Var& x, double clip) {
     for (int i = id; i >= 0; --i) {
         Var cur(values_[i].get());
         if (clip != 0) {
-            Clip(cur.derivative(), clip);
+            cur.derivative().Clip(clip);
         }
         Var nullvar(nullptr);
         if (cur.lhs() == -1) {
@@ -88,7 +73,7 @@ void ComputationGraph::ClearIntermediateGradientsFrom(Var x) {
     for (int i = id; i >= 0; --i) {
         Var cur(values_[i].get());
         if (cur.lhs() != -1) {
-            cur.derivative().setZero();
+            cur.derivative().SetZero();
         }
     }
 }

@@ -37,16 +37,18 @@ void RNNParams::Serialize(std::ostream& out) const {
 }
 
 RNNParams RNNParams::FromSerialized(std::istream& in) {
+#if 0
     std::string magic;
     in >> magic;
     if (magic != "RNN") {
         throw std::runtime_error("Not a RNN1 layer, but " + magic);
     }
 
-    RNNParams rnn(0, 0);
     rnn.whx_->value() = utils::ReadMatrixTxt(in);
     rnn.whh_->value() = utils::ReadMatrixTxt(in);
     rnn.bh_->value() = utils::ReadMatrixTxt(in);
+#endif
+    RNNParams rnn(0, 0);
     return rnn;
 }
 

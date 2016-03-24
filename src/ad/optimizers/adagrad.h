@@ -3,7 +3,6 @@
 #include <map>
 #include <utility>
 
-#include <Eigen/Dense>
 #include "../optimizer.h"
 #include "../graph.h"
 
@@ -12,11 +11,11 @@ namespace opt {
 
 class Adagrad : public Optimizer {
     private:
-        std::map<int, Eigen::MatrixXd> grad_acc_;
+        std::map<int, Matrix> grad_acc_;
         double learning_rate_;
         double epsilon_;
 
-        Eigen::MatrixXd& AccumulatedGradient(Var v);
+        Matrix& AccumulatedGradient(Var v);
 
     public:
         Adagrad(double learning_rate = 1, double epsilon = 1e-5) :

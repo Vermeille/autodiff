@@ -3,7 +3,6 @@
 #include <map>
 #include <utility>
 
-#include <Eigen/Dense>
 #include "../optimizer.h"
 #include "../graph.h"
 
@@ -12,17 +11,17 @@ namespace opt {
 
 class Adadelta : public Optimizer {
     private:
-        std::map<int, Eigen::MatrixXd> r_;
-        std::map<int, Eigen::MatrixXd> s_;
-        double learning_rate_;
-        double rho_;
-        double epsilon_;
+        std::map<int, Matrix> r_;
+        std::map<int, Matrix> s_;
+        float learning_rate_;
+        float rho_;
+        float epsilon_;
 
-        Eigen::MatrixXd& GetR(Var v);
-        Eigen::MatrixXd& GetS(Var v);
+        Matrix& GetR(Var v);
+        Matrix& GetS(Var v);
 
     public:
-        Adadelta(double learning_rate = 1, double rho = 0.95, double epsilon = 1e-6) :
+        Adadelta(float learning_rate = 1, float rho = 0.95, float epsilon = 1e-4f) :
             learning_rate_(learning_rate),
             rho_(rho),
             epsilon_(epsilon) {

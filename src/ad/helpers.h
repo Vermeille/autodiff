@@ -1,24 +1,21 @@
 #pragma once
 
 #include <iostream>
-
-#include <Eigen/Dense>
+#include "matrix.h"
 
 namespace ad {
 namespace utils {
 
 double RandomRange(float from, float to);
-void RandomInit(Eigen::MatrixXd& mat, float from, float to);
-void RandomExpandMatrix(Eigen::MatrixXd& mat, int rows, int cols,
-        float from, float to);
-Eigen::MatrixXd OneHotColumnVector(int index, int rows);
-int OneHotVectorDecode(const Eigen::MatrixXd& mat);
+void RandomExpandMatrix(Matrix& mat, int rows, int cols, float from, float to);
+Matrix OneHotColumnVector(int index, int rows);
+int OneHotVectorDecode(const Matrix& mat);
 
-void WriteMatrix(const Eigen::MatrixXd& mat, std::ostream& out);
-Eigen::MatrixXd ReadMatrix(std::istream& out);
+void WriteMatrix(const Matrix& mat, std::ostream& out);
+Matrix ReadMatrix(std::istream& out);
 
-void WriteMatrixTxt(const Eigen::MatrixXd& mat, std::ostream& out);
-Eigen::MatrixXd ReadMatrixTxt(std::istream& out);
+void WriteMatrixTxt(const Matrix& mat, std::ostream& out);
+Matrix ReadMatrixTxt(std::istream& out);
 
 } // utils
 } // ad

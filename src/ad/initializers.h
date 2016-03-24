@@ -1,19 +1,27 @@
 #pragma once
 
-#include <Eigen/Dense>
+#include "matrix.h"
+
+namespace ad {
+namespace cuda {
+
+void SetIdentity(float* array, size_t rows, size_t cols);
+
+}
+}
 
 namespace ad {
 
 struct MatrixInitialization {
-    virtual void Init(Eigen::MatrixXd& mat) const = 0;
+    virtual void Init(Matrix& mat) const = 0;
 };
 
 class Constant : public MatrixInitialization {
     private:
         double cst_;
     public:
-        virtual void Init(Eigen::MatrixXd& mat) const {
-            mat.setConstant(cst_);
+        virtual void Init(Matrix& mat) const {
+            mat.SetConstant(cst_);
         }
 
         Constant(double cst) : cst_(cst) {}
@@ -21,10 +29,10 @@ class Constant : public MatrixInitialization {
 
 class Gaussian : public MatrixInitialization {
     private:
-        double mu_;
-        double sigma_;
+        float mu_;
+        float sigma_;
     public:
-        virtual void Init(Eigen::MatrixXd& mat) const;
+        virtual void Init(Matrix& mat) const;
         Gaussian(double mu, double sigma)
             : mu_(mu),
             sigma_(sigma) {
@@ -33,10 +41,10 @@ class Gaussian : public MatrixInitialization {
 
 struct Uniform : public MatrixInitialization {
     private:
-        double from_;
-        double to_;
+        float from_;
+        float to_;
     public:
-        virtual void Init(Eigen::MatrixXd& mat) const;
+        virtual void Init(Matrix& mat) const;
         Uniform(double from, double to)
             : from_(from),
             to_(to) {
@@ -44,15 +52,15 @@ struct Uniform : public MatrixInitialization {
 };
 
 struct Xavier : public MatrixInitialization {
-    virtual void Init(Eigen::MatrixXd& mat) const {
+    virtual void Init(Matrix& mat) const {
         Uniform uni(0, 2.0 / sqrt(mat.rows() + mat.cols()));
         uni.Init(mat);
     }
 };
 
 struct Identity : public MatrixInitialization {
-    virtual void Init(Eigen::MatrixXd& mat) const {
-        mat.setIdentity();
+    virtual void Init(Matrix& mat) const {
+        mat.SetIdentity();
     }
 };
 

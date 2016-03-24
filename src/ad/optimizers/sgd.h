@@ -10,9 +10,7 @@ class SGD : public ad::Optimizer {
     public:
         SGD(float alpha) : alpha_(alpha) {}
 
-        virtual void Update(ad::Var& v) {
-            v.value() -= alpha_ * v.derivative();
-        }
+        virtual void Update(ad::Var& v);
 
     private:
         float alpha_;

@@ -3,7 +3,6 @@
 #include <map>
 #include <utility>
 
-#include <Eigen/Dense>
 #include "../optimizer.h"
 #include "../graph.h"
 
@@ -12,23 +11,23 @@ namespace opt {
 
 class Adam : public Optimizer {
     private:
-        std::map<int, Eigen::MatrixXd> m_;
-        std::map<int, Eigen::MatrixXd> v_;
-        double learning_rate_;
-        double beta1_;
-        double beta2_;
-        double epsilon_;
+        std::map<int, Matrix> m_;
+        std::map<int, Matrix> v_;
+        float learning_rate_;
+        float beta1_;
+        float beta2_;
+        float epsilon_;
         size_t t_;
 
-        Eigen::MatrixXd& GetM(Var v);
-        Eigen::MatrixXd& GetV(Var v);
+        Matrix& GetM(Var v);
+        Matrix& GetV(Var v);
 
     public:
         Adam(
-                double learning_rate = 0.001,
-                double beta1 = 0.9,
-                double beta2 = 0.999,
-                double epsilon = 1e-8) :
+                float learning_rate = 0.001,
+                float beta1 = 0.9,
+                float beta2 = 0.999,
+                float epsilon = 1e-6) :
             learning_rate_(learning_rate),
             beta1_(beta1),
             beta2_(beta2),

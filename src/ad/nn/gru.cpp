@@ -7,16 +7,16 @@ namespace ad {
 namespace nn {
 
 GRUParams::GRUParams(size_t output_size, size_t input_size)
-    : wzx_(std::make_shared<Param>(output_size, input_size, Xavier())),
-    wzh_(std::make_shared<Param>(output_size, output_size, Xavier())),
+    : wzx_(std::make_shared<Param>(output_size, input_size, Uniform(-0.08, 0.08))),
+    wzh_(std::make_shared<Param>(output_size, output_size, Uniform(-0.08, 0.08))),
     bz_(std::make_shared<Param>(output_size, 1, Constant(0))),
 
-    wrx_(std::make_shared<Param>(output_size, input_size, Xavier())),
-    wrh_(std::make_shared<Param>(output_size, output_size, Xavier())),
+    wrx_(std::make_shared<Param>(output_size, input_size, Uniform(-0.08, 0.08))),
+    wrh_(std::make_shared<Param>(output_size, output_size, Uniform(-0.08, 0.08))),
     br_(std::make_shared<Param>(output_size, 1, Constant(0))),
 
-    whx_(std::make_shared<Param>(output_size, input_size, Gaussian(0, 0.1))),
-    whh_(std::make_shared<Param>(output_size, output_size, Gaussian(0, 0.1))),
+    whx_(std::make_shared<Param>(output_size, input_size, Uniform(-0.08, 0.08))),
+    whh_(std::make_shared<Param>(output_size, output_size, Uniform(-0.08, 0.08))),
     bh_(std::make_shared<Param>(output_size, 1, Constant(0))),
 
     hidden_(std::make_shared<Param>(output_size, 1, Gaussian(0, 0.1))) {
@@ -24,13 +24,14 @@ GRUParams::GRUParams(size_t output_size, size_t input_size)
 
 
 void GRUParams::ResizeInput(size_t in, double init) {
-    utils::RandomExpandMatrix(wzx_->value(), wzx_->rows(), in, -init, init);
-    utils::RandomExpandMatrix(wrx_->value(), wrx_->rows(), in, -init, init);
-    utils::RandomExpandMatrix(whx_->value(), whx_->rows(), in, -init, init);
+    //utils::RandomExpandMatrix(wzx_->value(), wzx_->rows(), in, -init, init);
+    //utils::RandomExpandMatrix(wrx_->value(), wrx_->rows(), in, -init, init);
+    //utils::RandomExpandMatrix(whx_->value(), whx_->rows(), in, -init, init);
 }
 
 void GRUParams::ResizeOutput(size_t out, double init) {
     size_t input_size = wzx_->cols();
+#if 0
     utils::RandomExpandMatrix(wzx_->value(), out, input_size, -init, init);
     utils::RandomExpandMatrix(wzh_->value(), out, out, -init, init);
     utils::RandomExpandMatrix(bz_->value(), out, 1, -init, init);
@@ -44,6 +45,7 @@ void GRUParams::ResizeOutput(size_t out, double init) {
     utils::RandomExpandMatrix(bh_->value(), out, 1, -init, init);
 
     utils::RandomExpandMatrix(hidden_->value(), out, 1, -init, init);
+#endif
 }
 
 GRULayer::GRULayer(

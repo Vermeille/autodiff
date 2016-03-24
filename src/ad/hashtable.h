@@ -5,8 +5,6 @@
 #include <memory>
 #include <iostream>
 
-#include <Eigen/Dense>
-
 #include "graph.h"
 
 namespace ad {
@@ -22,12 +20,11 @@ class Hashtable {
         Hashtable(
                 size_t wordvec_size,
                 size_t vocab_size,
-                const MatrixInitialization& init = Xavier());
+                const MatrixInitialization& init = Uniform(-0.08, 0.08));
 
         std::string Serialize() const;
         static Hashtable FromSerialized(std::istream& in);
 
-        void ResizeVectors(size_t size, double init = 1);
         void ResizeVocab(size_t size, double init = 1);
 
         Var MakeVarFor(

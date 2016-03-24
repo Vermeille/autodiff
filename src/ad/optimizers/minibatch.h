@@ -7,9 +7,9 @@ class Minibatch : public Optimizer {
     private:
         const int batch_size_;
         std::unique_ptr<Optimizer> opt_;
-        std::map<size_t, std::pair<int, Eigen::MatrixXd>> grad_mean_;
+        std::map<size_t, std::pair<int, Matrix>> grad_mean_;
 
-        std::pair<int, Eigen::MatrixXd>& SetCurrentGradient(Var v) {
+        std::pair<int, Matrix>& SetCurrentGradient(Var v) {
             auto grad = grad_mean_.find(v.persistent_id());
             if (grad == grad_mean_.end()) {
                 grad = grad_mean_.insert(
@@ -30,7 +30,7 @@ class Minibatch : public Optimizer {
 
 
     public:
-        Minibatch(int size, const T& opt) : batch_size_(size), opt_(opt) {}
+        Minibatch(int size, Optimizer* opt) : batch_size_(size), opt_(opt) {}
 
         virtual void Update(Var& v) {
             auto& cur = SetCurrentGradient(v);
@@ -38,9 +38,9 @@ class Minibatch : public Optimizer {
                 return;
             }
             cur.first = 0;
-            v.derivative() = cur.second;
-            cur.second.setZero();
-            opt_.Update(v);
+            v.derivative() = std::move(cur.second);
+            cur.second.SetZero();
+            opt_->Update(v);
         }
 };
 

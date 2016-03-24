@@ -2,24 +2,19 @@ cmake_minimum_required(VERSION 2.8)
 
 project(libad CXX)
 
-find_package(Eigen3)
+find_package(CUDA REQUIRED)
 
-add_library(ad
+cuda_add_library(ad
     ad/nn.cpp
     ad/graph.cpp
     ad/helpers.cpp
-    ad/operators.cpp
     ad/hashtable.cpp
-    ad/initializers.cpp
     ad/nn/fullyconn.cpp
     ad/nn/gru.cpp
     ad/nn/rnn.cpp
     ad/nn/mrnn.cpp
     ad/nn/lstm.cpp
     ad/nn/highway-layer.cpp
-    ad/optimizers/adam.cpp
-    ad/optimizers/adagrad.cpp
-    ad/optimizers/adadelta.cpp
     ad/optimizers/momentum.cpp
 
     ad/ad.h
@@ -43,9 +38,24 @@ add_library(ad
     ad/optimizers/adagrad.h
     ad/optimizers/adadelta.h
     ad/optimizers/momentum.h
+
+    ad/operators.cu
+    ad/matrix.cu
+    ad/initializers.cu
+    ad/cuda/helpers.cu
+    ad/kernels/identity.cu
+    ad/kernels/kernels.h
+    ad/kernels/relu.cu
+    ad/optimizers/adam.cu
+    ad/optimizers/adadelta.cu
+    ad/optimizers/adagrad.cu
+    ad/optimizers/sgd.cu
 )
 
 target_include_directories(ad PUBLIC
-    ${EIGEN3_INCLUDE_DIR}
+    ${CUDA_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_link_libraries(ad ${CUDA_curand_LIBRARY})
+cuda_add_cublas_to_target(ad)
 

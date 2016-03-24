@@ -7,7 +7,7 @@ namespace ad {
 namespace nn {
 
 FullyConnParams::FullyConnParams(int out_sz, int in_sz) :
-    w_(std::make_shared<Param>(out_sz, in_sz, Xavier())),
+    w_(std::make_shared<Param>(out_sz, in_sz, Uniform(-0.08, 0.08))),
     b_(std::make_shared<Param>(out_sz, 1, Constant(0))) {
 }
 
@@ -22,12 +22,12 @@ Var FullyConnLayer::Compute(Var x) const {
 }
 
 void FullyConnParams::ResizeOutput(int size, double init) {
-    utils::RandomExpandMatrix(w_->value(), size, w_->cols(), -init, init);
-    utils::RandomExpandMatrix(b_->value(), size, 1, -init, init);
+    //utils::RandomExpandMatrix(w_->value(), size, w_->cols(), -init, init);
+    //utils::RandomExpandMatrix(b_->value(), size, 1, -init, init);
 }
 
 void FullyConnParams::ResizeInput(int size, double init) {
-    utils::RandomExpandMatrix(w_->value(), w_->rows(), size, -init, init);
+    //utils::RandomExpandMatrix(w_->value(), w_->rows(), size, -init, init);
 }
 
 void FullyConnParams::Serialize(std::ostream& out) const {

@@ -4,6 +4,8 @@
 #include <cassert>
 #include <random>
 
+#include "cuda/helpers.h"
+
 namespace ad {
 namespace utils {
 
@@ -12,51 +14,24 @@ double RandomRange(float from, float to) {
     return ((double)rand() / ((double)RAND_MAX + 1) * distance) + from;
 }
 
-void RandomExpandMatrix(Eigen::MatrixXd& mat, int rows, int cols,
-        float from, float to) {
-    int old_rows = mat.rows();
-    int old_cols = mat.cols();
-    mat.conservativeResize(rows, cols);
-    std::default_random_engine generator;
-    std::normal_distribution<double> gaussian(0, 2.0 / (mat.rows() + mat.cols()));
-
-    if (cols > old_cols) {
-        for (int i = 0; i < rows; ++i) {
-            for (int j = old_cols; j < cols; ++j) {
-                mat(i, j) = gaussian(generator);
-            }
-        }
-    }
-
-    if (rows > old_rows) {
-        for (int i = old_rows; i < rows; ++i) {
-            for (int j = 0; j < cols; ++j) {
-                mat(i, j) = gaussian(generator);
-            }
-        }
-    }
-}
-
-Eigen::MatrixXd OneHotColumnVector(int index, int rows) {
-    Eigen::MatrixXd mat(rows, 1);
-    mat.setZero();
+Matrix OneHotColumnVector(int index, int rows) {
+    RWMatrix mat(rows, 1);
+    mat.SetZero();
     mat(index, 0) = 1;
-    return mat;
+    return Matrix(mat);
 }
 
-int OneHotVectorDecode(const Eigen::MatrixXd& mat) {
+int OneHotVectorDecode(const Matrix& mat) {
     assert(mat.rows() == 1 || mat.cols() == 1);
 
-    Eigen::MatrixXd::Index max_row, max_col;
-    mat.maxCoeff(&max_row, &max_col);
-    if (mat.rows() == 1) {
-        return max_col;
-    } else {
-        return max_row;
-    }
+    int idx;
+    cublasIsamax(
+            ::cuda::g_cuhandle.get(), mat.size(), mat.data(), 1, &idx);
+    return idx - 1;
 }
 
-void WriteMatrix(const Eigen::MatrixXd& mat, std::ostream& out) {
+void WriteMatrix(const Matrix& mat, std::ostream& out) {
+#if 0
     uint32_t magic = 'MATX';
     out.write((char*)&magic, 4);
 
@@ -66,9 +41,11 @@ void WriteMatrix(const Eigen::MatrixXd& mat, std::ostream& out) {
     int_buf = mat.cols();
     out.write((char*)&int_buf, sizeof (int));
     out.write((char*)mat.data(), sizeof (double) * mat.size());
+#endif
 }
 
-Eigen::MatrixXd ReadMatrix(std::istream& out) {
+Matrix ReadMatrix(std::istream& out) {
+#if 0
     uint32_t magic;
     out.read((char*)&magic, 4);
 
@@ -80,23 +57,28 @@ Eigen::MatrixXd ReadMatrix(std::istream& out) {
     out.read((char*)&rows, sizeof (int));
     out.read((char*)&cols, sizeof (int));
 
-    Eigen::MatrixXd mat(rows, cols);
+    Matrix mat(rows, cols);
     out.read((char*)mat.data(), sizeof (double) * mat.size());
     return mat;
+#endif
+    return Matrix(1, 1);
 }
 
-void WriteMatrixTxt(const Eigen::MatrixXd& mat, std::ostream& out) {
+void WriteMatrixTxt(const Matrix& mat, std::ostream& out) {
+#if 0
     out << "MATX\n";
 
     out << mat.rows() << " " << mat.cols() << "\n";
-    const double* data = mat.data();
+    const float* data = mat.data();
     for (size_t i = 0; i < mat.size(); ++i) {
         out << data[i] << " ";
     }
     out << "\n";
+#endif
 }
 
-Eigen::MatrixXd ReadMatrixTxt(std::istream& in) {
+Matrix ReadMatrixTxt(std::istream& in) {
+#if 0
     std::string magic;
     in >> magic;
 
@@ -107,13 +89,15 @@ Eigen::MatrixXd ReadMatrixTxt(std::istream& in) {
     int rows, cols;
     in >> rows >> cols;
 
-    Eigen::MatrixXd mat(rows, cols);
+    Matrix mat(rows, cols);
     double* data = mat.data();
     for (size_t i = 0; i < mat.size(); ++i) {
         in >> data[i];
     }
 
     return mat;
+#endif
+    return Matrix(1, 1);
 }
 } // utils
 } // ad

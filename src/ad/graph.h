@@ -4,11 +4,10 @@
 #include <unordered_map>
 #include <memory>
 #include <set>
+#include <vector>
 
 #include "optimizer.h"
 #include "initializers.h"
-
-#include "Eigen/Dense"
 
 namespace ad {
 
@@ -20,15 +19,15 @@ void DoNothingBackprop(Var&, Var*, Var*);
 
 class Param {
     private:
-        Eigen::MatrixXd value_;
+        Matrix value_;
         mutable size_t persistent_id_;
         static size_t next_id_;
     public:
         Param(size_t rows, size_t cols,
                 const MatrixInitialization& init = Xavier());
-        Param(const Eigen::MatrixXd& val) : value_(val), persistent_id_(0) { }
-        const Eigen::MatrixXd& value() const { return value_; }
-        Eigen::MatrixXd& value() { return value_; }
+        Param(Matrix&& val) : value_(std::move(val)), persistent_id_(0) { }
+        const Matrix& value() const { return value_; }
+        Matrix& value() { return value_; }
         size_t rows() const { return value_.rows(); }
         size_t cols() const { return value_.cols(); }
         size_t GetPersistentId() const {
@@ -44,7 +43,7 @@ class Param {
 class VarImpl {
     private:
         std::shared_ptr<Param> value_;
-        Eigen::MatrixXd derivative_;
+        Matrix derivative_;
 
         int lhs_;
         int rhs_;
@@ -71,38 +70,38 @@ class VarImpl {
             backward_(bckwd),
             graph_(g),
             learnable_(learnable) {
-            derivative_.setZero();
+            derivative_.SetZero();
         }
 
         VarImpl(ComputationGraph* g,
-                const Eigen::MatrixXd& val,
+                Matrix&& val,
                 int my_id,
                 int op1,
                 int op2,
                 const backward_t& bckwd,
                 bool learnable)
-            : value_(std::make_shared<Param>(val)),
+            : value_(std::make_shared<Param>(std::move(val))),
             derivative_(val.rows(), val.cols()), lhs_(op1),
             rhs_(op2), id_(my_id), backward_(bckwd), graph_(g),
             learnable_(learnable) {
-            derivative_.setZero();
+            derivative_.SetZero();
         }
         ComputationGraph* graph() const { return graph_; }
-        const Eigen::MatrixXd& value() const { return value_->value();}
-        Eigen::MatrixXd& value() { return value_->value();}
-        const Eigen::MatrixXd& derivative() const { return derivative_;}
-        Eigen::MatrixXd& derivative() { return derivative_;}
+        const Matrix& value() const { return value_->value();}
+        Matrix& value() { return value_->value();}
+        const Matrix& derivative() const { return derivative_;}
+        Matrix& derivative() { return derivative_;}
 
         size_t persistent_id() const { return value_->GetPersistentId(); }
         bool IsLearnable() const { return learnable_; }
 
-        void ClearDerivative() { derivative_.setZero(); }
+        void ClearDerivative() { derivative_.SetZero(); }
 
         void Backward(Var& self, Var* lhs, Var* rhs) {
             backward_(self, lhs, rhs);
         }
 
-        void InitBackprop() { derivative_.setOnes(); }
+        void InitBackprop() { derivative_.SetOnes(); }
 
         int id() const { return id_; }
         int lhs() const { return lhs_; }
@@ -115,10 +114,10 @@ class Var {
         explicit Var(VarImpl* var) : var_(var) {}
         Var(const Var&) = default;
         ComputationGraph* graph() const { return var_->graph(); }
-        const Eigen::MatrixXd& value() const { return var_->value();}
-        Eigen::MatrixXd& value() { return var_->value();}
-        const Eigen::MatrixXd& derivative() const { return var_->derivative();}
-        Eigen::MatrixXd& derivative() { return var_->derivative();}
+        const Matrix& value() const { return var_->value();}
+        Matrix& value() { return var_->value();}
+        const Matrix& derivative() const { return var_->derivative();}
+        Matrix& derivative() { return var_->derivative();}
         bool IsLearnable() const { return var_->IsLearnable(); }
 
         void Backward(Var* lhs, Var* rhs) {
@@ -139,9 +138,9 @@ class ComputationGraph {
 
     public:
     Var CreateParam(std::shared_ptr<Param> val, bool learnable = false);
-    Var CreateParam(const Eigen::MatrixXd& val);
+    Var CreateParam(Matrix&& val);
     Var CreateNode(
-            const Eigen::MatrixXd& val,
+            Matrix&& val,
             const Var& lhs,
             const Var& rhs,
             backward_t bwd);

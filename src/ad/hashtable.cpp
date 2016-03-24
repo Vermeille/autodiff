@@ -1,5 +1,7 @@
 #include "hashtable.h"
 
+#include <sstream>
+
 #include "operators.h"
 #include "helpers.h"
 
@@ -48,12 +50,6 @@ Hashtable Hashtable::FromSerialized(std::istream& in) {
                 std::make_shared<Param>(ad::utils::ReadMatrixTxt(in)));
     }
     return hash;
-}
-
-void Hashtable::ResizeVectors(size_t size, double init) {
-    for (auto& w : w_) {
-        utils::RandomExpandMatrix(w->value(), size, 1, -init, init);
-    }
 }
 
 void Hashtable::ResizeVocab(size_t size, double init) {

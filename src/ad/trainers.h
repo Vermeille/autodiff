@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Eigen/Dense>
-
 namespace ad {
 namespace train {
 
@@ -24,7 +22,8 @@ class FeedForwardTrainer {
             g.BackpropFrom(J, 5);
             g.Update(*updater_);
 
-            return J.value()(0, 0);
+            //return J.value().CudaRead(0, 0);
+            return 0;
         }
 };
 
@@ -56,7 +55,7 @@ class WholeSequenceTaggerTrainer {
             g.BackpropFrom(J, 5);
             g.Update(*updater_);
 
-            return J.value()(0, 0);
+            return J.value().CudaRead(0, 0);
         }
 };
 
@@ -87,7 +86,7 @@ class IterativeSequenceTaggerTrainer {
 
                 Var J = model.Cost(g, h, expected[last]);
 
-                nll += J.value()(0, 0);
+                nll += J.value().CudaRead(0, 0);
                 g.BackpropFrom(J, 5);
                 g.Update(*updater_);
             }
