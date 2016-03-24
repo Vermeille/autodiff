@@ -180,8 +180,5 @@ void SetIdentity(float* array, size_t rows, size_t cols);
 void Relu(::cuda::Ptr<float> res, const ::cuda::Ptr<float> arr1, size_t sz);
 void ReluGrad(::cuda::Ptr<float> res, const ::cuda::Ptr<float> arr1, size_t sz);
 
-void Tanh(float* res, const float* arr1, size_t sz);
-void TanhGrad(float* res, const float* arr1, size_t sz);
-
 } // cuda
 } // ad
