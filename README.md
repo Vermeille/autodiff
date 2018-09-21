@@ -1,3 +1,6 @@
+That was a toy project for my own learning. it's of zero practical use now.
+Archived.
+
 # autodiff
 A very small automatic differentiation library for C++
 
